@@ -1,0 +1,62 @@
+create table salesman(salesman_id varchar(8), 
+name varchar(20), 
+city varchar(20), 
+commission varchar2(10), 
+constraint pks primary key(salesman_id));
+
+
+create table customer(customer_id varchar(8), 
+cust_name varchar2 (20), 
+city varchar2 (20), 
+grade number (3), 
+salesman_id varchar(8), 
+constraint pkc primary key(customer_id), 
+constraint fkc foreign key(salesman_id) references salesman(salesman_id) on delete set null);
+
+
+create table orders (ord_no varchar(8), 
+purchase_amt number(10, 2), 
+ord_date date, 
+customer_id varchar(8), 
+salesman_id varchar(8), 
+constraint pko primary key (ord_no), 
+constraint fkoc foreign key (customer_id) references customer (customer_id) on delete cascade, 
+constraint fkos foreign key (salesman_id) references salesman (salesman_id) on delete cascade);
+
+queries
+1
+SELECT GRADE, COUNT (DISTINCT CUSTOMER_ID) AS NO_OF_CUSTOMER 
+FROM CUSTOMER 
+GROUP BY GRADE 
+HAVING GRADE > (SELECT AVG(GRADE)
+FROM CUSTOMER 
+WHERE CITY='BANGALORE');
+
+2
+select salesman_id, name 
+from salesman s 
+where ((select count (*) 
+from customer 
+where salesman_id=s.salesman_id)>1);
+
+3
+select s.salesman_id, s.city 
+from salesman s 
+where exists (select city from customer where s.city=city and 
+s.salesman_id=salesman_id) 
+union 
+select salesman_id,'no match of cities' 
+from salesman s 
+where not exists (select city from customer where s.city=city and 
+s.salesman_id=salesman_id);
+
+4
+select distinct s.salesman_id,s.ord_date from orders s 
+where (select sum(purchase_amt) from orders where 
+salesman_id=s.salesman_id and ord_date=s.ord_date and s.customer_id=customer_id) 
+=(select max(sum(purchase_amt)) 
+from orders s1 where s1.ord_date=s.ord_date group by s1.ord_date,s1.salesman_id,s1.customer_id);
+
+5
+delete from salesman 
+where salesman_id=1000;
